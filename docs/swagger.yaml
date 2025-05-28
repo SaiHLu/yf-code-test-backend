@@ -1,0 +1,470 @@
+basePath: /api
+definitions:
+  dto.CreateUserRequest:
+    properties:
+      confirm_password:
+        maxLength: 250
+        minLength: 6
+        type: string
+      email:
+        maxLength: 250
+        type: string
+      name:
+        maxLength: 250
+        type: string
+      password:
+        maxLength: 250
+        minLength: 6
+        type: string
+    required:
+    - confirm_password
+    - email
+    - name
+    - password
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  dto.UpdateUserRequest:
+    properties:
+      email:
+        maxLength: 50
+        type: string
+      name:
+        maxLength: 50
+        type: string
+      password:
+        maxLength: 250
+        minLength: 6
+        type: string
+    type: object
+  model.UserLogEvent:
+    enum:
+    - user:created
+    - user:updated
+    - user:deleted
+    type: string
+    x-enum-varnames:
+    - UserLogEventCreate
+    - UserLogEventUpdate
+    - UserLogEventDelete
+  model.UserLogModel:
+    properties:
+      created_at:
+        type: string
+      data: {}
+      deleted_at:
+        type: string
+      event:
+        $ref: '#/definitions/model.UserLogEvent'
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.UserModel:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  presenter.JsonResponse:
+    properties:
+      data: {}
+      error: {}
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/presenter.Pagination'
+      success:
+        type: boolean
+    type: object
+  presenter.JsonResponseWithoutPagination:
+    properties:
+      data: {}
+      error: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  presenter.Pagination:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_count:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample user management API server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Yoma Fleet API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: User login to get JWT token
+      parameters:
+      - description: Login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+      summary: User Login
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Get current authenticated user information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserModel'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+      security:
+      - ApiKeyAuth: []
+      summary: Get Current Auth User
+      tags:
+      - Auth
+  /auth/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: Refresh JWT token using refresh token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.LoginResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+      security:
+      - ApiKeyAuth: []
+      summary: Refresh JWT Token
+      tags:
+      - Auth
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check the health of the service
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/presenter.JsonResponse'
+      summary: Health Check
+      tags:
+      - Health
+  /user-logs:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of user logs
+      parameters:
+      - in: query
+        minimum: 1
+        name: page
+        type: integer
+      - in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/presenter.JsonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.UserLogModel'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+      security:
+      - ApiKeyAuth: []
+      summary: Get User Logs
+      tags:
+      - UserLogs
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of users
+      parameters:
+      - in: query
+        minimum: 1
+        name: page
+        type: integer
+      - in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
+      - in: query
+        maxLength: 50
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/presenter.JsonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.UserModel'
+                  type: array
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get Users
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Create a new user
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserModel'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+      security:
+      - ApiKeyAuth: []
+      summary: Create User
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete User
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Get a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.UserModel'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get User
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/presenter.JsonResponseWithoutPagination'
+      security:
+      - ApiKeyAuth: []
+      summary: Update User
+      tags:
+      - Users
+securityDefinitions:
+  ApiKeyAuth:
+    description: Enter the token with the `Bearer ` prefix, e.g. "Bearer abcde12345"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

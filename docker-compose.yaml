@@ -1,0 +1,28 @@
+# Use postgres/example user/password credentials
+
+services:
+
+  postgres:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+
+  mongodb:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - 27017:27017
+
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - 6379:6379
+
+  
