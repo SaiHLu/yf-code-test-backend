@@ -45,3 +45,23 @@ docs:
 seed:
 	@echo "Seeding users..."
 	@go run ./database/seeders/main.go
+
+.PHONY: mocks
+mocks:
+	@echo "Generating mocks..."
+	@mkdir -p mocks/repository 
+	@mockgen -source=internal/port/repository/user-repository.go -destination=mocks/repository/user_repository_mock.go -package=repository
+	@mockgen -source=internal/port/repository/user-log-repository.go -destination=mocks/repository/user_log_repository_mock.go -package=repository
+	@echo "Mocks generated successfully."
+
+.PHONY: clean-mocks
+clean-mocks:
+	@echo "Cleaning mocks..."
+	@rm -rf mocks/
+	@echo "Mocks cleaned."
+
+.PHONY: tests
+tests:
+	@echo "Running tests..."
+	@go test -v ./...
+	@echo "Tests completed. Coverage report generated at coverage.html."
